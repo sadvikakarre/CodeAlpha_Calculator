@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Calculator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0d0f;
+      --panel: #141418;
+      --border: #2a2a35;
+      --accent: #00e5ff;
+      --accent2: #ff4081;
+      --btn-bg: #1c1c24;
+      --btn-hover: #252530;
+      --btn-active: #2e2e3d;
+      --text: #e8e8f0;
+      --text-dim: #6a6a80;
+      --display-bg: #0a0a0c;
+      --operator: #ff4081;
+      --equals: #00e5ff;
+    }
+
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Rajdhani', sans-serif;
+      background-image:
+        radial-gradient(ellipse at 20% 20%, rgba(0,229,255,0.04) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 80%, rgba(255,64,129,0.04) 0%, transparent 60%);
+    }
+
+    .calculator {
+      width: 340px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow:
+        0 0 0 1px rgba(0,229,255,0.08),
+        0 30px 80px rgba(0,0,0,0.7),
+        inset 0 1px 0 rgba(255,255,255,0.04);
+      position: relative;
+    }
+
+    .calculator::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 20%; right: 20%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0.6;
+    }
+
+    .calc-header {
+      padding: 16px 20px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .calc-title {
+      font-size: 11px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      font-weight: 300;
+    }
+
+    .status-dots { display: flex; gap: 6px; }
+
+    .dot { width: 6px; height: 6px; border-radius: 50%; }
+    .dot:nth-child(1) { background: #ff5f57; }
+    .dot:nth-child(2) { background: #ffbd2e; }
+    .dot:nth-child(3) { background: #28c840; }
+
+    .display {
+      background: var(--display-bg);
+      margin: 0 16px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      padding: 16px 20px 14px;
+      min-height: 90px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .display::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0,229,255,0.3), transparent);
+    }
+
+    .expression {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 13px;
+      color: var(--text-dim);
+      min-height: 18px;
+      text-align: right;
+      letter-spacing: 1px;
+    }
+
+    .result {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 36px;
+      color: var(--text);
+      text-align: right;
+      letter-spacing: 2px;
+      line-height: 1;
+      word-break: break-all;
+    }
+
+    .result.small { font-size: 26px; }
+    .result.tiny { font-size: 20px; }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      padding: 0 16px 16px;
+    }
+
+    .btn {
+      background: var(--btn-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 18px;
+      font-weight: 600;
+      height: 64px;
+      cursor: pointer;
+      transition: all 0.12s ease;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      letter-spacing: 1px;
+      user-select: none;
+    }
+
+    .btn:hover { background: var(--btn-hover); transform: translateY(-1px); }
+    .btn:active { background: var(--btn-active); transform: scale(0.96); }
+
+    .btn.operator { color: var(--operator); border-color: rgba(255,64,129,0.2); font-size: 22px; }
+    .btn.operator:hover { border-color: rgba(255,64,129,0.4); box-shadow: 0 0 16px rgba(255,64,129,0.15); }
+
+    .btn.equals {
+      background: var(--equals);
+      border-color: var(--equals);
+      color: #000;
+      font-size: 24px;
+      box-shadow: 0 4px 20px rgba(0,229,255,0.3);
+    }
+    .btn.equals:hover { background: #33ecff; transform: translateY(-2px); }
+
+    .btn.clear { color: #ffbd2e; border-color: rgba(255,189,46,0.2); font-size: 14px; letter-spacing: 2px; }
+    .btn.del { color: #ff5f57; border-color: rgba(255,95,87,0.2); font-size: 20px; }
+    .btn.zero { grid-column: span 2; }
+    .btn.percent { color: var(--text-dim); }
+
+    @keyframes flash {
+      0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; }
+    }
+    .flash { animation: flash 0.2s ease; }
+
+    .hint {
+      text-align: center;
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--text-dim);
+      padding-bottom: 14px;
+      text-transform: uppercase;
+      opacity: 0.5;
+    }
+  </style>
+</head>
+<body>
+
+<div class="calculator">
+  <div class="calc-header">
+    <span class="calc-title">Calc</span>
+    <div class="status-dots">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+  </div>
+
+  <div class="display">
+    <div class="expression" id="expression"></div>
+    <div class="result" id="result">0</div>
+  </div>
+
+  <div class="buttons">
+    <button class="btn clear" onclick="clearAll()">AC</button>
+    <button class="btn del" onclick="deleteLast()">⌫</button>
+    <button class="btn percent" onclick="percent()">%</button>
+    <button class="btn operator" onclick="appendOp('/')">÷</button>
+
+    <button class="btn" onclick="appendNum('7')">7</button>
+    <button class="btn" onclick="appendNum('8')">8</button>
+    <button class="btn" onclick="appendNum('9')">9</button>
+    <button class="btn operator" onclick="appendOp('*')">×</button>
+
+    <button class="btn" onclick="appendNum('4')">4</button>
+    <button class="btn" onclick="appendNum('5')">5</button>
+    <button class="btn" onclick="appendNum('6')">6</button>
+    <button class="btn operator" onclick="appendOp('-')">−</button>
+
+    <button class="btn" onclick="appendNum('1')">1</button>
+    <button class="btn" onclick="appendNum('2')">2</button>
+    <button class="btn" onclick="appendNum('3')">3</button>
+    <button class="btn operator" onclick="appendOp('+')">+</button>
+
+    <button class="btn zero" onclick="appendNum('0')">0</button>
+    <button class="btn" onclick="appendDot()">.</button>
+    <button class="btn equals" onclick="calculate()">=</button>
+  </div>
+
+  <div class="hint">keyboard supported</div>
+</div>
+
+<script>
+  let expression = '';
+  let justCalculated = false;
+
+  const resultEl = document.getElementById('result');
+  const expressionEl = document.getElementById('expression');
+
+  function updateDisplay(val) {
+    resultEl.textContent = val;
+    const len = String(val).length;
+    resultEl.className = 'result' + (len > 14 ? ' tiny' : len > 10 ? ' small' : '');
+  }
+
+  function appendNum(num) {
+    if (justCalculated) { expression = ''; justCalculated = false; }
+    expression += num;
+    updateDisplay(expression);
+    expressionEl.textContent = '';
+  }
+
+  function appendOp(op) {
+    justCalculated = false;
+    if (expression && '+-*/'.includes(expression.slice(-1))) {
+      expression = expression.slice(0, -1);
+    }
+    if (!expression) expression = '0';
+    expression += op;
+    updateDisplay(expression);
+  }
+
+  function appendDot() {
+    if (justCalculated) { expression = '0'; justCalculated = false; }
+    const parts = expression.split(/[+\-*/]/);
+    const last = parts[parts.length - 1];
+    if (last.includes('.')) return;
+    if (!last) expression += '0';
+    expression += '.';
+    updateDisplay(expression);
+  }
+
+  function clearAll() {
+    expression = '';
+    justCalculated = false;
+    updateDisplay('0');
+    expressionEl.textContent = '';
+  }
+
+  function deleteLast() {
+    if (justCalculated) { clearAll(); return; }
+    expression = expression.slice(0, -1);
+    updateDisplay(expression || '0');
+  }
+
+  function percent() {
+    if (!expression) return;
+    try {
+      const val = eval(expression) / 100;
+      expressionEl.textContent = expression + '%';
+      expression = String(val);
+      updateDisplay(val);
+      justCalculated = true;
+    } catch {}
+  }
+
+  function calculate() {
+    if (!expression) return;
+    try {
+      const result = Function('"use strict"; return (' + expression + ')')();
+      expressionEl.textContent = expression + ' =';
+      const rounded = parseFloat(result.toFixed(10));
+      expression = String(rounded);
+      updateDisplay(rounded);
+      justCalculated = true;
+      resultEl.classList.add('flash');
+      setTimeout(() => resultEl.classList.remove('flash'), 200);
+    } catch {
+      updateDisplay('Error');
+      expression = '';
+    }
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key >= '0' && e.key <= '9') appendNum(e.key);
+    else if (e.key === '+') appendOp('+');
+    else if (e.key === '-') appendOp('-');
+    else if (e.key === '*') appendOp('*');
+    else if (e.key === '/') { e.preventDefault(); appendOp('/'); }
+    else if (e.key === '.') appendDot();
+    else if (e.key === 'Enter' || e.key === '=') calculate();
+    else if (e.key === 'Backspace') deleteLast();
+    else if (e.key === 'Escape') clearAll();
+    else if (e.key === '%') percent();
+  });
+</script>
+</body>
+</html>
